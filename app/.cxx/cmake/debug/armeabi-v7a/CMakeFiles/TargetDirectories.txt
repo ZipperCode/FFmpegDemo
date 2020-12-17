@@ -1,3 +1,0 @@
-E:/Project/AndroidProject/FFmpegDemo/app/.cxx/cmake/debug/armeabi-v7a/CMakeFiles/native-lib.dir
-E:/Project/AndroidProject/FFmpegDemo/app/.cxx/cmake/debug/armeabi-v7a/CMakeFiles/edit_cache.dir
-E:/Project/AndroidProject/FFmpegDemo/app/.cxx/cmake/debug/armeabi-v7a/CMakeFiles/rebuild_cache.dir

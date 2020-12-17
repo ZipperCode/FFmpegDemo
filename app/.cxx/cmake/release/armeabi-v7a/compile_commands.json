@@ -1,7 +1,0 @@
-[
-{
-  "directory": "E:/Project/AndroidProject/FFmpegDemo/app/.cxx/cmake/release/armeabi-v7a",
-  "command": "E:\\AndroidSDK\\ndk\\21.1.6352462\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=armv7-none-linux-androideabi21 --gcc-toolchain=E:/AndroidSDK/ndk/21.1.6352462/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/AndroidSDK/ndk/21.1.6352462/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -IE:/Project/AndroidProject/FFmpegDemo/app/src/main/cpp/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -LE:/Project/AndroidProject/FFmpegDemo/app/src/main/cpp/ffmpeg/armeabi-v7a -LE:/Project/AndroidProject/FFmpegDemo/app/src/main/cpp/faac/armeabi-v7a  -Oz -DNDEBUG  -fPIC   -o CMakeFiles\\native-lib.dir\\native-lib.cpp.o -c E:\\Project\\AndroidProject\\FFmpegDemo\\app\\src\\main\\cpp\\native-lib.cpp",
-  "file": "E:\\Project\\AndroidProject\\FFmpegDemo\\app\\src\\main\\cpp\\native-lib.cpp"
-}
-]

@@ -1,7 +1,0 @@
-[
-{
-  "directory": "E:/Project/AndroidProject/FFmpegDemo/app/.cxx/cmake/debug/x86",
-  "command": "E:\\AndroidSDK\\ndk\\21.1.6352462\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=i686-none-linux-android19 --gcc-toolchain=E:/AndroidSDK/ndk/21.1.6352462/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/AndroidSDK/ndk/21.1.6352462/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -IE:/Project/AndroidProject/FFmpegDemo/app/src/main/cpp/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -mstackrealign -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -LE:/Project/AndroidProject/FFmpegDemo/app/src/main/cpp/ffmpeg/x86 -Lfaac/x86  -DANDROID_PLATFORM=android-28 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles\\native-lib.dir\\native-lib.cpp.o -c E:\\Project\\AndroidProject\\FFmpegDemo\\app\\src\\main\\cpp\\native-lib.cpp",
-  "file": "E:\\Project\\AndroidProject\\FFmpegDemo\\app\\src\\main\\cpp\\native-lib.cpp"
-}
-]
