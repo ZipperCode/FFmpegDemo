@@ -106,27 +106,27 @@ enum nal_priority_e
     NAL_PRIORITY_HIGHEST    = 3,
 };
 
-/* The data within the payload is already NAL-encapsulated; the ref_idc and type
- * are merely in the struct for easy access by the calling application.
- * All data returned in an x264_nal_t, including the data in p_payload, is no longer
- * valid after the next call to x264_encoder_encode.  Thus it must be used or copied
- * before calling x264_encoder_encode or x264_encoder_headers again. */
+/* 有效载荷的数据已经被NAL封装; ref_idc 和 type仅在结构体中，以便程序访问
+ * 在x264_nal_t中返回的所有数据，包括在p_payload的数据，在下一次调用
+ * x264_encoder_encode函数后都将不存在，必须再次调用
+ * x264_encoder_encode 或者 x264_encoder_headers之前被使用或复制 */
 typedef struct x264_nal_t
 {
-    int i_ref_idc;  /* nal_priority_e */
-    int i_type;     /* nal_unit_type_e */
-    int b_long_startcode;
-    int i_first_mb; /* If this NAL is a slice, the index of the first MB in the slice. */
-    int i_last_mb;  /* If this NAL is a slice, the index of the last MB in the slice. */
+    int i_ref_idc;  /* nal_priority_e   指该NAL单元的优先级  */
+    int i_type;     /* nal_unit_type_e  指该NAL单元的类型  */
+    int b_long_startcode;            // 是否采用长前缀码0x00000001
+    int i_first_mb; /* 如果NAL是一个片，则为该片中的第一个MB索引 */
+    int i_last_mb;  /* 如果这个NAL是一个片，则为该片中最后一个MB的索引。 */
 
     /* Size of payload (including any padding) in bytes. */
     int     i_payload;
-    /* If param->b_annexb is set, Annex-B bytestream with startcode.
-     * Otherwise, startcode is replaced with a 4-byte size.
+    /* 该NAL单元存储数据缓冲区
+     * 如果 #param->b_annexb 被设置, Annex-B bytestream with startcode.
+     * 否则, startcode 被替换成4字节大小 .
      * This size is the size used in mp4/similar muxing; it is equal to i_payload-4 */
     uint8_t *p_payload;
 
-    /* Size of padding in bytes. */
+    /* Size of padding in bytes.        填充大小 */
     int i_padding;
 } x264_nal_t;
 
@@ -200,9 +200,9 @@ typedef struct x264_nal_t
 #define X264_CQM_FLAT                0
 #define X264_CQM_JVT                 1
 #define X264_CQM_CUSTOM              2
-#define X264_RC_CQP                  0
-#define X264_RC_CRF                  1
-#define X264_RC_ABR                  2
+#define X264_RC_CQP                  0                  // 恒定质量
+#define X264_RC_CRF                  1                  // 恒定码率
+#define X264_RC_ABR                  2                  // 平均码率
 #define X264_QP_AUTO                 0
 #define X264_AQ_NONE                 0
 #define X264_AQ_VARIANCE             1
@@ -303,24 +303,24 @@ typedef struct x264_zone_t
 
 typedef struct x264_param_t
 {
-    /* CPU flags */
+    /* CPU 标志位 */
     uint32_t    cpu;
-    int         i_threads;           /* encode multiple frames in parallel */
-    int         i_lookahead_threads; /* multiple threads for lookahead analysis */
-    int         b_sliced_threads;  /* Whether to use slice-based threading. */
-    int         b_deterministic; /* whether to allow non-deterministic optimizations when threaded */
-    int         b_cpu_independent; /* force canonical behavior rather than cpu-dependent optimal algorithms */
-    int         i_sync_lookahead; /* threaded lookahead buffer */
+    int         i_threads;              /* 并行编码多帧; 线程数，为0则自动多线程编码 */
+    int         i_lookahead_threads;    /* multiple threads for lookahead analysis */
+    int         b_sliced_threads;       /* Whether to use slice-based threading. */
+    int         b_deterministic;        /* 是否允许非确定性的线程优化 */
+    int         b_cpu_independent;      /* 强制采用典型行为，而不是采用独立于cpu的优化算法 */
+    int         i_sync_lookahead;       /* threaded lookahead buffer */
 
-    /* Video Properties */
+    /* 视频配置 */
     int         i_width;
     int         i_height;
-    int         i_csp;         /* CSP of encoded bitstream */
+    int         i_csp;                  /* 编码比特流的CSP，仅支持i420，色彩空间设置 */
     int         i_bitdepth;
-    int         i_level_idc;
-    int         i_frame_total; /* number of frames to encode if known, else 0 */
+    int         i_level_idc;            /* 指明作用的level值，可能与编码复杂度有关*/
+    int         i_frame_total;          /* 编码帧的总数, 如果有就填否则填0 */
 
-    /* NAL HRD
+    /* NAL HRD （hypothetical reference decoder）
      * Uses Buffering and Picture Timing SEIs to signal HRD
      * The HRD in H.264 was not designed with VFR in mind.
      * It is therefore not recommendeded to use NAL HRD with VFR.
@@ -333,49 +333,51 @@ typedef struct x264_param_t
         /* they will be reduced to be 0 < x <= 65535 and prime */
         int         i_sar_height;
         int         i_sar_width;
-
+        /* 0=undef, 1=no overscan, 2=overscan 过扫描线，
+         * 默认"undef"(不设置)，可选项：show(观看) / crop(去除) */
         int         i_overscan;    /* 0=undef, 1=no overscan, 2=overscan */
 
         /* see h264 annex E for the values of the following */
-        int         i_vidformat;
-        int         b_fullrange;
-        int         i_colorprim;
-        int         i_transfer;
-        int         i_colmatrix;
-        int         i_chroma_loc;    /* both top & bottom */
+        int         i_vidformat;        /* 视频在编码/数字化之前是什么类型，默认"undef". 取值有：Component, PAL, NTSC, SECAM, MAC 等 */
+        int         b_fullrange;        /* 样本亮度和色度的计算方式，默认"off"，可选项：off/on */
+        int         i_colorprim;        /* 原始色度格式，默认"undef" */
+        int         i_transfer;         /* 转换方式，默认"undef" */
+        int         i_colmatrix;        /* 设置从RGB计算得到亮度和色度所用的矩阵系数，默认"undef" */
+        int         i_chroma_loc;       /* both top & bottom 设置色度采样位置，范围0~5，默认0 */
     } vui;
 
     /* Bitstream parameters */
-    int         i_frame_reference;  /* Maximum number of reference frames */
-    int         i_dpb_size;         /* Force a DPB size larger than that implied by B-frames and reference frames.
-                                     * Useful in combination with interactive error resilience. */
-    int         i_keyint_max;       /* Force an IDR keyframe at this interval */
-    int         i_keyint_min;       /* Scenecuts closer together than this are coded as I, not IDR. */
-    int         i_scenecut_threshold; /* how aggressively to insert extra I frames */
-    int         b_intra_refresh;    /* Whether or not to use periodic intra refresh instead of IDR frames. */
+    int         i_frame_reference;      /* 最大参考帧数目 */
+    int         i_dpb_size;             /* Force a DPB size larger than that implied by B-frames and reference frames.
+                                         * Useful in combination with interactive error resilience. */
+    int         i_keyint_max;           /* 设定IDR帧之间的最大间隔，在这个间隔内强制一个IDR关键帧 */
+    int         i_keyint_min;           /* 设定IDR帧之间的最小间隔, 场景切换小于此值编码位I帧, 而不是 IDR帧.*/
+    int         i_scenecut_threshold;   /* 场景切换阈值，插入额外I帧 */
+    int         b_intra_refresh;        /* 是否使用周期帧内刷新替代IDR帧 */
 
-    int         i_bframe;   /* how many b-frame between 2 references pictures */
-    int         i_bframe_adaptive;
-    int         i_bframe_bias;
-    int         i_bframe_pyramid;   /* Keep some B-frames as references: 0=off, 1=strict hierarchical, 2=normal */
-    int         b_open_gop;
-    int         b_bluray_compat;
+    int         i_bframe;               /* 两个参考帧之间的B帧数目 */
+    int         i_bframe_adaptive;      /* 自适应B帧判定, 可选取值：X264_B_ADAPT_FAST等 */
+    int         i_bframe_bias;          /* 控制B帧替代P帧的概率，范围-100 ~ +100，该值越高越容易插入B帧，默认0.*/
+    int         i_bframe_pyramid;       /* 允许部分B帧为参考帧: 0=off, 1=strict hierarchical, 2=normal */
+    int         b_open_gop;             /* Close GOP是指帧间的预测都是在GOP中进行的。
+                                         * 使用Open GOP，后一个GOP会参考前一个GOP的信息 */
+    int         b_bluray_compat;        /* 支持蓝光碟 */
     int         i_avcintra_class;
     int         i_avcintra_flavor;
 
-    int         b_deblocking_filter;
+    int         b_deblocking_filter;    /* 去块滤波开关 */
     int         i_deblocking_filter_alphac0;    /* [-6, 6] -6 light filter, 6 strong */
     int         i_deblocking_filter_beta;       /* [-6, 6]  idem */
 
-    int         b_cabac;
-    int         i_cabac_init_idc;
+    int         b_cabac;                /* 自适应算术编码cabac开关 */
+    int         i_cabac_init_idc;       /* 给出算术编码初始化时表格的选择 */
 
-    int         b_interlaced;
+    int         b_interlaced;           /* 隔行扫描 */
     int         b_constrained_intra;
 
-    int         i_cqm_preset;
-    char        *psz_cqm_file;      /* filename (in UTF-8) of CQM file, JM format */
-    uint8_t     cqm_4iy[16];        /* used only if i_cqm_preset == X264_CQM_CUSTOM */
+    int         i_cqm_preset;           /* 自定义量化矩阵(CQM), 初始化量化模式为flat */
+    char        *psz_cqm_file;          /* filename (in UTF-8) of CQM file, JM format */
+    uint8_t     cqm_4iy[16];            /* used only if i_cqm_preset == X264_CQM_CUSTOM */
     uint8_t     cqm_4py[16];
     uint8_t     cqm_4ic[16];
     uint8_t     cqm_4pc[16];
@@ -394,86 +396,85 @@ typedef struct x264_param_t
     /* Encoder analyser parameters */
     struct
     {
-        unsigned int intra;     /* intra partitions */
-        unsigned int inter;     /* inter partitions */
+        unsigned int intra;     /* 帧内分区 */
+        unsigned int inter;     /* 帧间分区 */
 
         int          b_transform_8x8;
-        int          i_weighted_pred; /* weighting for P-frames */
-        int          b_weighted_bipred; /* implicit weighting for B-frames */
-        int          i_direct_mv_pred; /* spatial vs temporal mv prediction */
-        int          i_chroma_qp_offset;
+        int          i_weighted_pred;       /* P帧权重 */
+        int          b_weighted_bipred;     /* B帧隐式加权 */
+        int          i_direct_mv_pred;      /* 时间空间运动向量预测模式 */
+        int          i_chroma_qp_offset;    /* 色度量化步长偏移量 */
 
-        int          i_me_method; /* motion estimation algorithm to use (X264_ME_*) */
-        int          i_me_range; /* integer pixel motion estimation search range (from predicted mv) */
-        int          i_mv_range; /* maximum length of a mv (in pixels). -1 = auto, based on level */
-        int          i_mv_range_thread; /* minimum space between threads. -1 = auto, based on number of threads. */
-        int          i_subpel_refine; /* subpixel motion estimation quality */
-        int          b_chroma_me; /* chroma ME for subpel and mode decision in P-frames */
-        int          b_mixed_references; /* allow each mb partition to have its own reference number */
-        int          i_trellis;  /* trellis RD quantization */
-        int          b_fast_pskip; /* early SKIP detection on P-frames */
-        int          b_dct_decimate; /* transform coefficient thresholding on P-frames */
-        int          i_noise_reduction; /* adaptive pseudo-deadzone */
-        float        f_psy_rd; /* Psy RD strength */
-        float        f_psy_trellis; /* Psy trellis strength */
-        int          b_psy; /* Toggle all psy optimizations */
+        int          i_me_method;           /* 运动估计算法 (X264_ME_*) */
+        int          i_me_range;            /* 整像素运动估计搜索范围 (from predicted mv)  */
+        int          i_mv_range;            /* 运动矢量最大长度. -1 = auto, based on level */
+        int          i_mv_range_thread;     /* 线程之间的最小运动向量缓冲.  -1 = auto, based on number of threads. */
+        int          i_subpel_refine;       /* 亚像素运动估计质量 */
+        int          b_chroma_me;           /* 亚像素色度运动估计和P帧的模式选择 */
+        int          b_mixed_references;    /* 允许每个宏块的分区有它自己的参考号 */
+        int          i_trellis;             /* trellis RD quantization */
+        int          b_fast_pskip;          /* 快速P帧跳过检测 */
+        int          b_dct_decimate;        /* P帧变换系数阈值 */
+        int          i_noise_reduction;     /* 自适应伪盲区 */
+        float        f_psy_rd;              /* Psy优化开关，可能会增强细节 */
+        float        f_psy_trellis;         /* Psy RD强度 */
+        int          b_psy;                 /* Psy Trellis强度 */
 
         int          b_mb_info;            /* Use input mb_info data in x264_picture_t */
         int          b_mb_info_update; /* Update the values in mb_info according to the results of encoding. */
 
         /* the deadzone size that will be used in luma quantization */
-        int          i_luma_deadzone[2]; /* {inter, intra} */
+        int          i_luma_deadzone[2];    /* 亮度量化中使用的盲区大小，{ 帧间, 帧内 } */
 
-        int          b_psnr;    /* compute and print PSNR stats */
-        int          b_ssim;    /* compute and print SSIM stats */
+        int          b_psnr;                /* 计算和打印PSNR信息 */
+        int          b_ssim;                /* 计算和打印SSIM信息 */
     } analyse;
 
     /* Rate control parameters */
     struct
     {
-        int         i_rc_method;    /* X264_RC_* */
+        int         i_rc_method;            /* 码率控制方式 ： X264_RC_CQP恒定质量 X264_RC_*
+                                             * X264_RC_CRF恒定码率,  X264_RC_ABR平均码率*/
+        int         i_qp_constant;          /* 指定P帧的量化值，0 - 51，0表示无损 */
+        int         i_qp_min;               /* 允许的最小量化值，默认10 */
+        int         i_qp_max;               /* 允许的最大量化值，默认51 */
+        int         i_qp_step;              /* 量化步长，即相邻两帧之间量化值之差的最大值 */
 
-        int         i_qp_constant;  /* 0=lossless */
-        int         i_qp_min;       /* min allowed QP value */
-        int         i_qp_max;       /* max allowed QP value */
-        int         i_qp_step;      /* max QP step between frames */
-
-        int         i_bitrate;
-        float       f_rf_constant;  /* 1pass VBR, nominal QP */
-        float       f_rf_constant_max;  /* In CRF mode, maximum CRF as caused by VBV */
-        float       f_rate_tolerance;
-        int         i_vbv_max_bitrate;
-        int         i_vbv_buffer_size;
-        float       f_vbv_buffer_init; /* <=1: fraction of buffer_size. >1: kbit */
-        float       f_ip_factor;
-        float       f_pb_factor;
+        int         i_bitrate;              /* 平均码率大小*/
+        float       f_rf_constant;          /* 1pass VBR, nominal QP. 实际质量，值越大图像越花,越小越清晰 */
+        float       f_rf_constant_max;      /* 最大码率因子，该选项仅在使用CRF并开启VBV时有效， */
+        float       f_rate_tolerance;       /* 允许的误差*/
+        int         i_vbv_max_bitrate;      /* 平均码率模式下，最大瞬时码率，默认0 */
+        int         i_vbv_buffer_size;      /* 码率控制缓冲区的大小，单位kbit，默认0 */
+        float       f_vbv_buffer_init;      /* 设置码率控制缓冲区（VBV）缓冲达到多满(百分比) <=1: fraction of buffer_size. >1: kbit */
+        float       f_ip_factor;            /* I帧和P帧之间的量化因子（QP）比值，默认1.4 */
+        float       f_pb_factor;            /* P帧和B帧之间的量化因子（QP）比值，默认1.3 */
 
         /* VBV filler: force CBR VBV and use filler bytes to ensure hard-CBR.
          * Implied by NAL-HRD CBR. */
         int         b_filler;
 
-        int         i_aq_mode;      /* psy adaptive QP. (X264_AQ_*) */
-        float       f_aq_strength;
-        int         b_mb_tree;      /* Macroblock-tree ratecontrol. */
-        int         i_lookahead;
+        int         i_aq_mode;              /* 自适应量化（AQ）模式。 0：关闭AQ (X264_AQ_*) */
+        float       f_aq_strength;          /* AQ强度，减少平趟和纹理区域的块效应和模糊度 */
+        int         b_mb_tree;              /* 是否开启基于macroblock的qp控制方法 */
+        int         i_lookahead;            /* 决定mbtree向前预测的帧数 */
 
         /* 2pass */
-        int         b_stat_write;   /* Enable stat writing in psz_stat_out */
-        char        *psz_stat_out;  /* output filename (in UTF-8) of the 2pass stats file */
-        int         b_stat_read;    /* Read stat from psz_stat_in and use it */
-        char        *psz_stat_in;   /* input filename (in UTF-8) of the 2pass stats file */
+        int         b_stat_write;           /* 是否将统计数据写入到文件psz_stat_out中 */
+        char        *psz_stat_out;          /* output filename (in UTF-8) of the 2pass stats file */
+        int         b_stat_read;            /* 是否从文件psz_stat_in中读入统计数据 */
+        char        *psz_stat_in;           /* input filename (in UTF-8) of the 2pass stats file */
 
         /* 2pass params (same as ffmpeg ones) */
-        float       f_qcompress;    /* 0.0 => cbr, 1.0 => constant qp */
-        float       f_qblur;        /* temporally blur quants */
-        float       f_complexity_blur; /* temporally blur complexity */
-        x264_zone_t *zones;         /* ratecontrol overrides */
+        float       f_qcompress;    /* 量化曲线(quantizer curve)压缩因子。  0.0 => cbr, 1.0 => constant qp */
+        float       f_qblur;        /* 时间上模糊量化，减少QP的波动(after curve compression) */
+        float       f_complexity_blur; /* 时间上模糊复杂性，减少QP的波动(before curve compression) */
+        x264_zone_t *zones;         /* 码率控制覆盖 */
         int         i_zones;        /* number of zone_t's */
         char        *psz_zones;     /* alternate method of specifying zones */
     } rc;
 
-    /* Cropping Rectangle parameters: added to those implicitly defined by
-       non-mod16 video resolutions. */
+    /* 裁剪矩形参数：添加到由隐式定义的参数中非mod16视频分辨率。 */
     struct
     {
         int i_left;
@@ -488,19 +489,20 @@ typedef struct x264_param_t
     /* alternative transfer SEI */
     int i_alternative_transfer;
 
-    /* Muxing parameters */
-    int b_aud;                  /* generate access unit delimiters */
-    int b_repeat_headers;       /* put SPS/PPS before each keyframe */
+    /* Muxing复用参数 */
+    int b_aud;                  /* 生成访问单元分隔符 */
+    int b_repeat_headers;       /* 是否复制sps和pps放在每个关键帧的前面。
+                                 * true:则NALU之前是4字节前缀码0x00000001
+                                 * false:则NALU之前的4个字节为NALU长度*/
     int b_annexb;               /* if set, place start codes (4 bytes) before NAL units,
                                  * otherwise place size (4 bytes) before NAL units. */
-    int i_sps_id;               /* SPS and PPS id number */
-    int b_vfr_input;            /* VFR input.  If 1, use timebase and timestamps for ratecontrol purposes.
-                                 * If 0, use fps only. */
+    int i_sps_id;               /* sps和pps的id号 */
+    int b_vfr_input;            /* VFR输入。1 ：时间基和时间戳用于码率控制  0 ：仅帧率用于码率控制 use fps only. */
     int b_pulldown;             /* use explicity set timebase for CFR */
-    uint32_t i_fps_num;
-    uint32_t i_fps_den;
-    uint32_t i_timebase_num;    /* Timebase numerator */
-    uint32_t i_timebase_den;    /* Timebase denominator */
+    uint32_t i_fps_num;         /* 帧率的分子 */
+    uint32_t i_fps_den;         /* 帧率的分母 */
+    uint32_t i_timebase_num;    /* 时间基的分子 */
+    uint32_t i_timebase_den;    /* 时间基的分母 */
 
     int b_tff;
 
@@ -535,10 +537,10 @@ typedef struct x264_param_t
     char *psz_clbin_file;    /* filename (in UTF-8) of the compiled OpenCL kernel cache file */
 
     /* Slicing parameters */
-    int i_slice_max_size;    /* Max size per slice in bytes; includes estimated NAL overhead. */
-    int i_slice_max_mbs;     /* Max number of MBs per slice; overrides i_slice_count. */
+    int i_slice_max_size;    /* 每个slice的最大字节数，包括预计的NAL开销 */
+    int i_slice_max_mbs;     /* 每个slice的最大宏块数，重写i_slice_count */
     int i_slice_min_mbs;     /* Min number of MBs per slice */
-    int i_slice_count;       /* Number of slices per frame: forces rectangular slices. */
+    int i_slice_count;       /* 每帧slice的数目，每个slice必须是矩形 */
     int i_slice_count_max;   /* Absolute cap on slices per frame; stops applying slice-max-size
                               * and slice-max-mbs if this is reached. */
 
@@ -667,15 +669,20 @@ X264_API void x264_param_cleanup( x264_param_t *param );
  *      Currently available presets are, ordered from fastest to slowest: */
 static const char * const x264_preset_names[] = { "ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo", 0 };
 
-/*      The presets can also be indexed numerically, as in:
- *      x264_param_default_preset( &param, "3", ... )
- *      with ultrafast mapping to "0" and placebo mapping to "9".  This mapping may
- *      of course change if new presets are added in between, but will always be
- *      ordered from fastest to slowest.
+/*      预设也可以按数字索引，如：x264_param_default_preset（&param，“3”，…）
+ *      超快速映射到“0”，安慰剂映射到“9”。
+ *      当然，如果在两者之间添加新的预设值，这种映射可能会发生变化，但始终是从最快到最慢排序的。
  *
- *      Warning: the speed of these presets scales dramatically.  Ultrafast is a full
+ *      Warning: 这些预设的速度会急剧增加.  Ultrafast is a full
  *      100 times faster than placebo!
- *
+ *      @film           电影真人类型
+ *      @animation      动画
+ *      @grain
+ *      @stillimage     静态图片编码时使用
+ *      @psnr
+ *      @ssim
+ *      @fastdecode     快速解码
+ *      @zerolarency    零延迟
  *      Currently available tunings are: */
 static const char * const x264_tune_names[] = { "film", "animation", "grain", "stillimage", "psnr", "ssim", "fastdecode", "zerolatency", 0 };
 
@@ -693,16 +700,14 @@ X264_API int x264_param_default_preset( x264_param_t *, const char *preset, cons
 X264_API void x264_param_apply_fastfirstpass( x264_param_t * );
 
 /* x264_param_apply_profile:
- *      Applies the restrictions of the given profile.
- *      Currently available profiles are, from most to least restrictive: */
+ *      应用给定配置文件的限制。
+ *      当前可用的配置文件的限制从大到小依次为： */
 static const char * const x264_profile_names[] = { "baseline", "main", "high", "high10", "high422", "high444", 0 };
 
 /*      (can be NULL, in which case the function will do nothing)
  *
- *      Does NOT guarantee that the given profile will be used: if the restrictions
- *      of "High" are applied to settings that are already Baseline-compatible, the
- *      stream will remain baseline.  In short, it does not increase settings, only
- *      decrease them.
+ *      不保证将使用给定的配置文件：如果“高”应用于已与基线兼容的设置，
+ *      流将保持基线。简而言之，它不会增加设置，只会降低设置
  *
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
 X264_API int x264_param_apply_profile( x264_param_t *, const char *profile );
@@ -727,8 +732,8 @@ enum pic_struct_e
     PIC_STRUCT_BOTTOM_TOP        = 5, // bottom field followed by top
     PIC_STRUCT_TOP_BOTTOM_TOP    = 6, // top field, bottom field, top field repeated
     PIC_STRUCT_BOTTOM_TOP_BOTTOM = 7, // bottom field, top field, bottom field repeated
-    PIC_STRUCT_DOUBLE            = 8, // double frame
-    PIC_STRUCT_TRIPLE            = 9, // triple frame
+    PIC_STRUCT_DOUBLE            = 8, // 双帧
+    PIC_STRUCT_TRIPLE            = 9, // 多帧
 };
 
 typedef struct x264_hrd_t
@@ -766,10 +771,10 @@ typedef struct x264_sei_t
 
 typedef struct x264_image_t
 {
-    int     i_csp;       /* Colorspace */
+    int     i_csp;       /* Colorspace                  颜色控件，x264只支持I420 */
     int     i_plane;     /* Number of image planes */
-    int     i_stride[4]; /* Strides for each plane */
-    uint8_t *plane[4];   /* Pointers to each plane */
+    int     i_stride[4]; /* Strides for each plane      对应于各个色彩分量的跨度 */
+    uint8_t *plane[4];   /* Pointers to each plane      对应于各个色彩分量的数据  */
 } x264_image_t;
 
 typedef struct x264_image_properties_t
@@ -861,30 +866,29 @@ typedef struct x264_picture_t
             e.g. deblocking, in frames where it isn't necessary.  To force complete
             reconstruction, at a small speed cost, set b_full_recon. */
     x264_image_t img;
-    /* In: optional information to modify encoder decisions for this frame
+    /* In: 用于修改此帧的编码器决定的可选信息
      * Out: information about the encoded frame */
     x264_image_properties_t prop;
     /* Out: HRD timing information. Output only when i_nal_hrd is set. */
     x264_hrd_t hrd_timing;
     /* In: arbitrary user SEI (e.g subtitles, AFDs) */
     x264_sei_t extra_sei;
-    /* private user data. copied from input to output frames. */
+    /* private user data. 从输入帧复制到输出帧 */
     void *opaque;
 } x264_picture_t;
 
 /* x264_picture_init:
- *  initialize an x264_picture_t.  Needs to be done if the calling application
+ *  初始化一个 x264_picture_t.  Needs to be done if the calling application
  *  allocates its own x264_picture_t as opposed to using x264_picture_alloc. */
 X264_API void x264_picture_init( x264_picture_t *pic );
 
 /* x264_picture_alloc:
- *  alloc data for a picture. You must call x264_picture_clean on it.
+ *  为图片分配数据. You must call x264_picture_clean on it.
  *  returns 0 on success, or -1 on malloc failure or invalid colorspace. */
 X264_API int x264_picture_alloc( x264_picture_t *pic, int i_csp, int i_width, int i_height );
 
 /* x264_picture_clean:
- *  free associated resource for a x264_picture_t allocated with
- *  x264_picture_alloc ONLY */
+ *  仅使用分配给x264_picture_alloc的x264_picture_t的可用关联资源 */
 X264_API void x264_picture_clean( x264_picture_t *pic );
 
 /****************************************************************************
@@ -899,16 +903,16 @@ X264_API void x264_picture_clean( x264_picture_t *pic );
 #define x264_encoder_open x264_encoder_glue2(x264_encoder_open_,X264_BUILD)
 
 /* x264_encoder_open:
- *      create a new encoder handler, all parameters from x264_param_t are copied */
+ *      创建一个新的编码器处理程序，将复制x264参数中的所有参数 */
 X264_API x264_t *x264_encoder_open( x264_param_t * );
 
 /* x264_encoder_reconfig:
- *      various parameters from x264_param_t are copied.
- *      this takes effect immediately, on whichever frame is encoded next;
- *      due to delay, this may not be the next frame passed to encoder_encode.
- *      if the change should apply to some particular frame, use x264_picture_t->param instead.
- *      returns 0 on success, negative on parameter validation error.
- *      not all parameters can be changed; see the actual function for a detailed breakdown.
+ *      将复制x264参数中的各种参数。
+ *      这将立即生效，无论下一帧被编码；
+ *      由于延迟，这可能不是下一帧传递给编码器_encode。
+ *      如果更改应用于某个特定帧，请改用x264_picture_t->param。
+ *      成功时返回0，参数验证错误时返回负值。
+ *      并非所有参数都可以更改；请参阅实际函数以了解详细的分解。
  *
  *      since not all parameters can be changed, moving from preset to preset may not always
  *      fully copy all relevant parameters, but should still work usably in practice. however,
@@ -925,43 +929,41 @@ X264_API int x264_encoder_reconfig( x264_t *, x264_param_t * );
  *      (e.g. filenames) should not be modified by the calling application. */
 X264_API void x264_encoder_parameters( x264_t *, x264_param_t * );
 /* x264_encoder_headers:
- *      return the SPS and PPS that will be used for the whole stream.
+ *      返回将用于整个流的SPS和PPS。
  *      *pi_nal is the number of NAL units outputted in pp_nal.
- *      returns the number of bytes in the returned NALs.
- *      returns negative on error.
- *      the payloads of all output NALs are guaranteed to be sequential in memory. */
+ *      返回的NAL中的字节数。
+ *      出错时返回负数。
+ *      所有输出nal的有效负载在内存中保证是顺序的。 */
 X264_API int x264_encoder_headers( x264_t *, x264_nal_t **pp_nal, int *pi_nal );
 /* x264_encoder_encode:
- *      encode one picture.
+ *      编码一个 picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
- *      returns the number of bytes in the returned NALs.
- *      returns negative on error and zero if no NAL units returned.
- *      the payloads of all output NALs are guaranteed to be sequential in memory. */
+ *      返回的NAL中的字节数。
+ *      出错时返回负数，如果没有返回NAL单位，则返回零。
+ *      所有输出nal的有效负载在内存中保证是顺序的。 */
 X264_API int x264_encoder_encode( x264_t *, x264_nal_t **pp_nal, int *pi_nal, x264_picture_t *pic_in, x264_picture_t *pic_out );
 /* x264_encoder_close:
- *      close an encoder handler */
+ *      关闭编码器 */
 X264_API void x264_encoder_close( x264_t * );
 /* x264_encoder_delayed_frames:
- *      return the number of currently delayed (buffered) frames
- *      this should be used at the end of the stream, to know when you have all the encoded frames. */
+ *      返回当前载荷（缓冲）的帧数
+ *      这应该在流的末尾使用，以便知道何时拥有所有编码帧。 */
 X264_API int x264_encoder_delayed_frames( x264_t * );
 /* x264_encoder_maximum_delayed_frames( x264_t * ):
- *      return the maximum number of delayed (buffered) frames that can occur with the current
- *      parameters. */
+ *      返回当前参数可以发生的最大延迟（缓冲）帧数 */
 X264_API int x264_encoder_maximum_delayed_frames( x264_t * );
 /* x264_encoder_intra_refresh:
- *      If an intra refresh is not in progress, begin one with the next P-frame.
- *      If an intra refresh is in progress, begin one as soon as the current one finishes.
- *      Requires that b_intra_refresh be set.
+ *      如果帧内刷新没有进行，则从下一个P帧开始。
+ *      如果正在进行内部刷新，则在当前刷新完成后立即开始刷新。
+ *      要求设置b_intra_refresh。
  *
  *      Useful for interactive streaming where the client can tell the server that packet loss has
  *      occurred.  In this case, keyint can be set to an extremely high value so that intra refreshes
  *      only occur when calling x264_encoder_intra_refresh.
  *
- *      In multi-pass encoding, if x264_encoder_intra_refresh is called differently in each pass,
- *      behavior is undefined.
+ *      在多通道编码中，如果在每个过程中不同地调用x264_编码器_intra_refresh，则行为未定义。
  *
- *      Should not be called during an x264_encoder_encode. */
+ *      在x264_编码器_编码期间不应调用。 */
 X264_API void x264_encoder_intra_refresh( x264_t * );
 /* x264_encoder_invalidate_reference:
  *      An interactive error resilience tool, designed for use in a low-latency one-encoder-few-clients
@@ -976,13 +978,11 @@ X264_API void x264_encoder_intra_refresh( x264_t * );
  *      estimation and thus has no speed impact.  It is also recommended to set a very large keyframe
  *      interval, so that keyframes are not used except as necessary for error recovery.
  *
- *      x264_encoder_invalidate_reference is not currently compatible with the use of B-frames or intra
- *      refresh.
+ *      x264_编码器_invalidate_引用当前与B帧或帧内刷新的使用不兼容。
  *
- *      In multi-pass encoding, if x264_encoder_invalidate_reference is called differently in each pass,
- *      behavior is undefined.
+ *      在多通道编码中，如果在每个过程中不同地调用x264_encoder_invalidate_引用，则行为未定义。
  *
- *      Should not be called during an x264_encoder_encode, but multiple calls can be made simultaneously.
+ *      不应在x264_编码器_编码期间调用，但可以同时进行多个调用。
  *
  *      Returns 0 on success, negative on failure. */
 X264_API int x264_encoder_invalidate_reference( x264_t *, int64_t pts );
