@@ -33,4 +33,7 @@ target_link_libraries(
         faac
         # 链接x264静态库
         x264
+        z
+        android
+        OpenSLES
         ${log-lib})
